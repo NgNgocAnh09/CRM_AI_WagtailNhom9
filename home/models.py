@@ -3,6 +3,8 @@ from wagtail.models import Page
 from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel
 from wagtail.snippets.models import register_snippet
+from django.utils.html import strip_tags
+from .ai_services import analyze_note_content
 
 # 1. Model Khách hàng (Được đăng ký Snippet để quản lý riêng)
 @register_snippet
@@ -32,12 +34,30 @@ class Customer(models.Model):
 class Note(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='notes', verbose_name="Khách hàng")
     content = RichTextField(verbose_name="Nội dung ghi chú")
+    ai_summary = models.TextField(blank=True, null=True, verbose_name="AI Tóm tắt")
+    ai_category = models.CharField(max_length=100, blank=True, null=True, verbose_name="AI Phân loại")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
 
     panels = [
         FieldPanel('customer'),
         FieldPanel('content'),
+        FieldPanel('ai_summary'),
+        FieldPanel('ai_category'),
     ]
+
+    def save(self, *args, **kwargs):
+        # Nếu có nội dung, loại bỏ thẻ HTML và nhờ AI phân tích
+        if self.content:
+            plain_text = strip_tags(self.content)
+            ai_result = analyze_note_content(plain_text)
+            
+            # Chỉ ghi đè nếu AI trả về dữ liệu thành công
+            if ai_result.get("summary"):
+                self.ai_summary = ai_result.get("summary")
+            if ai_result.get("category"):
+                self.ai_category = ai_result.get("category")
+                
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Ghi chú cho {self.customer.name} - {self.created_at.strftime('%d/%m/%Y')}"
