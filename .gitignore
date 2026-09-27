@@ -1,0 +1,15 @@
+# Môi trường ảo (Không đưa bộ cài thư viện nặng nề lên mạng)
+venv/
+env/
+
+# File bảo mật (Tuyệt đối không đưa lên mạng)
+.env
+
+# Database cục bộ (Không đưa database nháp lên mạng)
+db.sqlite3
+*.sqlite3
+
+# File rác sinh ra trong quá trình chạy Python
+__pycache__/
+*.pyc
+.DS_Store
