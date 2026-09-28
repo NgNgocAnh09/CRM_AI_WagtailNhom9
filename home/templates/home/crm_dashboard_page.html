@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .customer-card { margin-bottom: 20px; transition: transform 0.2s; }
+    .customer-card:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .ai-badge { font-size: 0.8rem; }
+    .note-item { border-left: 4px solid #0d6efd; padding-left: 15px; margin-bottom: 15px; }
+    .ai-analysis { background-color: #f8f9fa; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px dashed #dee2e6; }
+    .category-tiem-nang { color: #198754; font-weight: bold; }
+    .category-dang-can-nhac { color: #fd7e14; font-weight: bold; }
+    .category-khong-quan-tam { color: #dc3545; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">AI CRM System</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="display-4">{{ page.title }}</h1>
+            <div class="lead">
+                {{ page.intro|richtext }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for customer in customers %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card customer-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ customer.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Email:</strong> {{ customer.email }}<br>
+                        <strong>Phone:</strong> {{ customer.phone }}<br>
+                        {% if customer.company %}
+                        <strong>Company:</strong> {{ customer.company }}
+                        {% endif %}
+                    </p>
+                    <hr>
+                    <h6>Ghi chú & AI Phân tích:</h6>
+                    {% for note in customer.notes.all %}
+                    <div class="note-item">
+                        <small class="text-muted">{{ note.created_at|date:"d/m/Y H:i" }}</small>
+                        <div class="mt-1">
+                            {{ note.content|richtext }}
+                        </div>
+
+                        {% if note.ai_summary or note.ai_category %}
+                        <div class="ai-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-info text-dark ai-badge">AI Insight</span>
+                                <span class="category-{{ note.ai_category|slugify }}">
+                                    {{ note.ai_category }}
+                                </span>
+                            </div>
+                            <p class="small mb-0 text-secondary"><em>{{ note.ai_summary }}</em></p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small">Chưa có ghi chú nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-warning">Chưa có dữ liệu khách hàng nào được tìm thấy.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<footer class="mt-5 py-4 bg-light border-top">
+    <div class="container text-center text-muted">
+        <p>&copy; 2024 CRM AI Wagtail System - Checklist 4 Completed</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

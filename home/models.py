@@ -75,6 +75,13 @@ class CRMDashboardPage(Page):
         FieldPanel('intro'),
     ]
 
+    def get_context(self, request):
+        context = super().get_context(request)
+        # Lấy danh sách khách hàng và các ghi chú của họ
+        customers = Customer.objects.all().prefetch_related('notes')
+        context['customers'] = customers
+        return context
+
     subpage_types = []  # Không cho tạo trang con nếu không cần thiết
     max_count = 1       # Chỉ cho phép tạo 1 trang Dashboard duy nhất trong hệ thống
 
