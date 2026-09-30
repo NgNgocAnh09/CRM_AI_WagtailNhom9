@@ -1,90 +1,642 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags humanize %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-    .customer-card { margin-bottom: 20px; transition: transform 0.2s; }
-    .customer-card:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .ai-badge { font-size: 0.8rem; }
-    .note-item { border-left: 4px solid #0d6efd; padding-left: 15px; margin-bottom: 15px; }
-    .ai-analysis { background-color: #f8f9fa; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px dashed #dee2e6; }
-    .category-tiem-nang { color: #198754; font-weight: bold; }
-    .category-dang-can-nhac { color: #fd7e14; font-weight: bold; }
-    .category-khong-quan-tam { color: #dc3545; font-weight: bold; }
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        --ai-gradient: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    .crm-navbar {
+        background: #1e293b;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #ffffff;
+    }
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .customer-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #ffffff;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+    .customer-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .customer-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 20px;
+    }
+
+    .note-item {
+        border-left: 4px solid #0d6efd;
+        padding: 14px;
+        border-radius: 0 8px 8px 0;
+        background-color: #ffffff;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .ai-analysis {
+        background: linear-gradient(135deg, #f0f4ff 0%, #e6edff 100%);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        border: 1px solid #c7d7fe;
+    }
+
+    .ai-next-action {
+        background-color: #fff9db;
+        border-left: 3px solid #fcc419;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.88rem;
+    }
+
+    .badge-tiem-nang { background-color: #198754 !important; color: #fff; }
+    .badge-dang-can-nhac { background-color: #fd7e14 !important; color: #fff; }
+    .badge-khieu-nai { background-color: #dc3545 !important; color: #fff; }
+    .badge-khong-quan-tam { background-color: #6c757d !important; color: #fff; }
+
+    .nav-tabs .nav-link {
+        color: #475569;
+        font-weight: 600;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 20px;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        background: transparent;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<nav class="navbar navbar-dark bg-dark mb-4">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark crm-navbar mb-4 py-3">
     <div class="container">
-        <span class="navbar-brand mb-0 h1">AI CRM System</span>
+        <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="/">
+            <i class="bi bi-robot text-primary me-2 fs-3"></i> Smart CRM AI Wagtail
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/" class="btn btn-outline-light btn-sm rounded-pill px-3" target="_blank">
+                <i class="bi bi-sliders me-1"></i> Wagtail Admin
+            </a>
+        </div>
     </div>
 </nav>
 
-<div class="container">
+<div class="container pb-5">
+    <!-- Messages Notifications -->
+    {% if messages %}
     <div class="row">
-        <div class="col-12 mb-4">
-            <h1 class="display-4">{{ page.title }}</h1>
-            <div class="lead">
-                {{ page.intro|richtext }}
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Page Header & Title -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-dark mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>{{ page.title }}</h1>
+            <div class="text-secondary lead fs-6">
+                {% if page.intro %}
+                    {{ page.intro|richtext }}
+                {% else %}
+                    Hệ thống quản lý khách hàng thông minh tích hợp Google Gemini AI tự động phân loại tương tác và đề xuất hành động.
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <button class="btn btn-primary btn-lg rounded-3 shadow-sm px-4 me-2" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                <i class="bi bi-magic me-2"></i>Thêm Ghi Chú AI
+            </button>
+            <button class="btn btn-success btn-lg rounded-3 shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="bi bi-person-plus-fill me-1"></i>Thêm Khách
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Summary Metrics Row -->
+    <div class="row g-3 mb-4">
+        <!-- Metric 1: Total Customers -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3 border-start border-4 border-primary">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">TỔNG KHÁCH HÀNG</span>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill"><i class="bi bi-people-fill fs-6"></i></span>
+                </div>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_customers }}</h2>
+                <small class="text-muted"><i class="bi bi-check-circle text-success me-1"></i>Hồ sơ được lưu trữ</small>
+            </div>
+        </div>
+
+        <!-- Metric 2: Revenue & Orders -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3 border-start border-4 border-success">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">DOANH THU ĐƠN HÀNG</span>
+                    <span class="badge bg-success-subtle text-success rounded-pill"><i class="bi bi-currency-dollar fs-6"></i></span>
+                </div>
+                <h2 class="fw-bold mb-0 text-success">{{ total_revenue|floatformat:0 }} VNĐ</h2>
+                <small class="text-muted"><i class="bi bi-bag-check-fill text-success me-1"></i>{{ total_orders }} đơn hàng thành công</small>
+            </div>
+        </div>
+
+        <!-- Metric 3: AI Notes & Category Breakdown -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3 border-start border-4 border-purple" style="border-color: #6f42c1 !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">GHI CHÚ PHÂN TÍCH AI</span>
+                    <span class="badge bg-purple-subtle text-purple rounded-pill" style="color: #6f42c1; background-color: #f3e8ff;"><i class="bi bi-cpu-fill fs-6"></i></span>
+                </div>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_notes }}</h2>
+                <div class="mt-1 d-flex flex-wrap gap-1">
+                    <span class="badge bg-success" title="Tiềm năng">{{ ai_stats.potential }} Tiềm năng</span>
+                    <span class="badge bg-warning text-dark" title="Đang cân nhắc">{{ ai_stats.considering }} Cân nhắc</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 4: Resources -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3 border-start border-4 border-info">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">TÀI NGUYÊN DOANH NGHIỆP</span>
+                    <span class="badge bg-info-subtle text-info rounded-pill"><i class="bi bi-box-seam-fill fs-6"></i></span>
+                </div>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_resources }}</h2>
+                <small class="text-muted"><i class="bi bi-check2-circle text-info me-1"></i>Sản phẩm & Dịch vụ CRM</small>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        {% for customer in customers %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card customer-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">{{ customer.name }}</h5>
+    <!-- Filter & Action Toolbar -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4 p-3 bg-white">
+        <form method="GET" action="" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control bg-light border-start-0" placeholder="Tìm tên, email, công ty, SĐT..." value="{{ search_query }}">
                 </div>
-                <div class="card-body">
-                    <p class="card-text">
-                        <strong>Email:</strong> {{ customer.email }}<br>
-                        <strong>Phone:</strong> {{ customer.phone }}<br>
-                        {% if customer.company %}
-                        <strong>Company:</strong> {{ customer.company }}
-                        {% endif %}
-                    </p>
-                    <hr>
-                    <h6>Ghi chú & AI Phân tích:</h6>
-                    {% for note in customer.notes.all %}
-                    <div class="note-item">
-                        <small class="text-muted">{{ note.created_at|date:"d/m/Y H:i" }}</small>
-                        <div class="mt-1">
-                            {{ note.content|richtext }}
+            </div>
+
+            <div class="col-md-3">
+                <select name="ai_category" class="form-select bg-light">
+                    <option value="">-- Phân loại AI --</option>
+                    <option value="Tiềm năng" {% if ai_category_filter == 'Tiềm năng' %}selected{% endif %}>🟢 Tiềm năng</option>
+                    <option value="Đang cân nhắc" {% if ai_category_filter == 'Đang cân nhắc' %}selected{% endif %}>🟠 Đang cân nhắc</option>
+                    <option value="Khiếu nại" {% if ai_category_filter == 'Khiếu nại' %}selected{% endif %}>🔴 Khiếu nại / Hỗ trợ</option>
+                    <option value="Không quan tâm" {% if ai_category_filter == 'Không quan tâm' %}selected{% endif %}>⚪ Không quan tâm</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="status" class="form-select bg-light">
+                    <option value="">-- Trạng thái Khách hàng --</option>
+                    {% for code, label in customer_status_choices %}
+                    <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 fw-semibold"><i class="bi bi-funnel-fill me-1"></i> Lọc</button>
+                {% if search_query or ai_category_filter or status_filter %}
+                <a href="{{ page.url }}" class="btn btn-outline-secondary" title="Xóa bộ lọc"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Main Content Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4 border-bottom-2" id="crmTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-pane" type="button" role="tab">
+                <i class="bi bi-people-fill me-2"></i>Khách Hàng & Ghi Chú AI ({{ customers|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-pane" type="button" role="tab">
+                <i class="bi bi-cart-check-fill me-2"></i>Đơn Hàng ({{ orders|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources-pane" type="button" role="tab">
+                <i class="bi bi-box-seam me-2"></i>Tài Nguyên & Sản Phẩm ({{ resources|length }})
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="crmTabsContent">
+        <!-- TAB 1: CUSTOMERS & AI NOTES -->
+        <div class="tab-pane fade show active" id="customers-pane" role="tabpanel">
+            <div class="row">
+                {% for customer in customers %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card customer-card h-100">
+                        <div class="customer-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">{{ customer.name }}</h5>
+                                <small class="text-secondary"><i class="bi bi-building me-1"></i>{{ customer.company|default:"Khách hàng cá nhân" }}</small>
+                            </div>
+                            <span class="badge rounded-pill {% if customer.status == 'potential' %}bg-success{% elif customer.status == 'customer' %}bg-primary{% elif customer.status == 'contacted' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                                {{ customer.get_status_display }}
+                            </span>
                         </div>
 
-                        {% if note.ai_summary or note.ai_category %}
-                        <div class="ai-analysis">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-info text-dark ai-badge">AI Insight</span>
-                                <span class="category-{{ note.ai_category|slugify }}">
-                                    {{ note.ai_category }}
-                                </span>
+                        <div class="card-body">
+                            <!-- Contact Info -->
+                            <div class="mb-3 fs-6">
+                                <div class="mb-1 text-truncate"><i class="bi bi-envelope text-primary me-2"></i><a href="mailto:{{ customer.email }}" class="text-decoration-none text-dark">{{ customer.email }}</a></div>
+                                <div><i class="bi bi-telephone text-primary me-2"></i><a href="tel:{{ customer.phone }}" class="text-decoration-none text-dark">{{ customer.phone }}</a></div>
                             </div>
-                            <p class="small mb-0 text-secondary"><em>{{ note.ai_summary }}</em></p>
+
+                            <!-- Customer Orders Count -->
+                            {% if customer.orders.all %}
+                            <div class="mb-3 p-2 bg-light rounded-3 d-flex justify-content-between align-items-center">
+                                <span class="small fw-semibold text-secondary"><i class="bi bi-receipt me-1"></i>Đơn hàng:</span>
+                                <span class="badge bg-success-subtle text-success fw-bold">{{ customer.orders.all|length }} đơn hàng</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-journal-text text-primary me-1"></i>Ghi chú & AI Phân tích</h6>
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#addNoteModal" onclick="document.getElementById('modal_customer_id').value='{{ customer.id }}';">
+                                    <i class="bi bi-plus"></i>Thêm ghi chú
+                                </button>
+                            </div>
+
+                            {% for note in customer.notes.all %}
+                            <div class="note-item">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted fw-semibold"><i class="bi bi-clock me-1"></i>{{ note.created_at|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                <div class="text-dark small mb-2">
+                                    {{ note.content|richtext }}
+                                </div>
+
+                                {% if note.ai_summary or note.ai_category %}
+                                <div class="ai-analysis">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-purple text-white px-2 py-1" style="background-color: #6f42c1;">
+                                            <i class="bi bi-stars me-1"></i>Gemini AI
+                                        </span>
+                                        <span class="badge rounded-pill {% if 'Tiềm năng' in note.ai_category %}badge-tiem-nang{% elif 'cân nhắc' in note.ai_category %}badge-dang-can-nhac{% elif 'Khiếu nại' in note.ai_category %}badge-khieu-nai{% else %}badge-khong-quan-tam{% endif %} fw-bold px-2 py-1">
+                                            {{ note.ai_category }}
+                                        </span>
+                                    </div>
+                                    <p class="small text-secondary mb-2"><em>"{{ note.ai_summary }}"</em></p>
+
+                                    {% if note.ai_next_action %}
+                                    <div class="ai-next-action mb-2">
+                                        <strong class="text-dark"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Đề xuất hành động:</strong>
+                                        <div class="mt-1 text-dark">{{ note.ai_next_action }}</div>
+                                    </div>
+                                    {% endif %}
+
+                                    <form method="POST" action="{% url 'crm_reanalyze_note' note.id %}" class="mt-2 text-end">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-link text-decoration-none text-muted p-0 fs-7">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>Phân tích lại bằng AI
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% empty %}
+                            <div class="p-3 bg-light text-center rounded-3">
+                                <small class="text-muted">Chưa có ghi chú nào. Hãy thêm ghi chú để AI tự động phân loại!</small>
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% endif %}
                     </div>
-                    {% empty %}
-                    <p class="text-muted small">Chưa có ghi chú nào.</p>
-                    {% endfor %}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info p-4 text-center rounded-3">
+                        <i class="bi bi-search fs-1 d-block mb-2"></i>
+                        <h5>Không tìm thấy dữ liệu khách hàng nào</h5>
+                        <p class="text-muted">Thử thay đổi bộ lọc hoặc thêm khách hàng mới vào hệ thống.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal"><i class="bi bi-plus-circle me-1"></i>Thêm khách hàng đầu tiên</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- TAB 2: ORDERS -->
+        <div class="tab-pane fade" id="orders-pane" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cart-fill text-success me-2"></i>Danh sách Đơn hàng CRM</h5>
+                    <button class="btn btn-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+                        <i class="bi bi-plus-lg me-1"></i>Tạo đơn hàng
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đơn hàng</th>
+                                <th>Khách hàng</th>
+                                <th>Tên đơn hàng / Dịch vụ</th>
+                                <th>Giá trị (VNĐ)</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ order.order_number }}</td>
+                                <td>
+                                    <strong>{{ order.customer.name }}</strong><br>
+                                    <small class="text-muted">{{ order.customer.email }}</small>
+                                </td>
+                                <td>{{ order.title }}</td>
+                                <td class="fw-bold text-success">{{ order.amount|floatformat:0 }} VNĐ</td>
+                                <td>
+                                    <span class="badge {% if order.status == 'completed' %}bg-success{% elif order.status == 'processing' %}bg-info text-dark{% elif order.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="small text-secondary">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Chưa có đơn hàng nào được tạo.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-warning">Chưa có dữ liệu khách hàng nào được tìm thấy.</div>
+
+        <!-- TAB 3: BUSINESS RESOURCES -->
+        <div class="tab-pane fade" id="resources-pane" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-boxes text-info me-2"></i>Danh mục Tài nguyên & Sản phẩm Doanh nghiệp</h5>
+                    <button class="btn btn-info text-white btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addResourceModal">
+                        <i class="bi bi-plus-lg me-1"></i>Thêm tài nguyên
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tên tài nguyên / Sản phẩm</th>
+                                <th>Loại</th>
+                                <th>Đơn giá (VNĐ)</th>
+                                <th>Số lượng</th>
+                                <th>Trạng thái</th>
+                                <th>Mô tả</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for res in resources %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ res.name }}</td>
+                                <td><span class="badge bg-secondary">{{ res.get_category_display }}</span></td>
+                                <td class="fw-bold text-primary">{{ res.price|floatformat:0 }} VNĐ</td>
+                                <td><span class="badge bg-light text-dark border">{{ res.quantity }}</span></td>
+                                <td>
+                                    {% if res.is_active %}
+                                    <span class="badge bg-success-subtle text-success">Đang hoạt động</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Tạm ngưng</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-secondary">{{ res.description|richtext }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Chưa có tài nguyên doanh nghiệp nào.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
-<footer class="mt-5 py-4 bg-light border-top">
+<!-- MODAL 1: ADD NOTE & AI ANALYSIS -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-header-title mb-0 fw-bold"><i class="bi bi-magic me-2"></i>Tạo Ghi Chú & Kích Hoạt AI Gemini</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'crm_add_note' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Chọn Khách hàng <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="modal_customer_id" class="form-select" required>
+                            <option value="">-- Chọn khách hàng --</option>
+                            {% for cust in all_customers %}
+                            <option value="{{ cust.id }}">{{ cust.name }} ({{ cust.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nội dung trao đổi / Ghi chú <span class="text-danger">*</span></label>
+                        <textarea name="content" class="form-control" rows="4" placeholder="Nhập chi tiết cuộc gọi, email hoặc yêu cầu của khách hàng..." required></textarea>
+                    </div>
+                    <div class="p-3 bg-light rounded-3 text-secondary small border">
+                        <i class="bi bi-info-circle text-primary me-1"></i> Sau khi bấm <strong>"Lưu & Phân Tích AI"</strong>, hệ thống sẽ tự động gửi nội dung đến Google Gemini API để tóm tắt và phân loại khách hàng.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4"><i class="bi bi-cpu-fill me-1"></i>Lưu & Phân Tích AI</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: ADD CUSTOMER -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-header-title mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Thêm Khách Hàng Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'crm_add_customer' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên khách hàng <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="Ví dụ: Nguyễn Văn A" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" placeholder="nguyenvana@gmail.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
+                        <input type="text" name="phone" class="form-control" placeholder="0901234567" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên công ty / Tổ chức</label>
+                        <input type="text" name="company" class="form-control" placeholder="Công ty ABC">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Trạng thái tiếp cận</label>
+                        <select name="status" class="form-select">
+                            {% for code, label in customer_status_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success fw-semibold px-4"><i class="bi bi-check-circle me-1"></i>Thêm Khách Hàng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 3: ADD ORDER -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-header-title mb-0 fw-bold"><i class="bi bi-cart-plus-fill me-2"></i>Tạo Đơn Hàng Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'crm_add_order' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Khách hàng <span class="text-danger">*</span></label>
+                        <select name="customer_id" class="form-select" required>
+                            <option value="">-- Chọn khách hàng --</option>
+                            {% for cust in all_customers %}
+                            <option value="{{ cust.id }}">{{ cust.name }} ({{ cust.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên đơn hàng / Dịch vụ <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="Triển khai phần mềm Smart CRM" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Giá trị đơn hàng (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" class="form-control" placeholder="15000000" step="1000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Trạng thái đơn hàng</label>
+                        <select name="status" class="form-select">
+                            {% for code, label in order_status_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success fw-semibold px-4"><i class="bi bi-check-circle me-1"></i>Tạo Đơn Hàng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 4: ADD RESOURCE -->
+<div class="modal fade" id="addResourceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-header-title mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Thêm Tài Nguyên / Sản Phẩm</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'crm_add_resource' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên tài nguyên / Sản phẩm <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="Gói CRM Enterprise 1 năm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Loại tài nguyên</label>
+                        <select name="category" class="form-select">
+                            {% for code, label in resource_category_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Đơn giá (VNĐ)</label>
+                            <input type="number" name="price" class="form-control" placeholder="5000000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Số lượng / Dung lượng</label>
+                            <input type="number" name="quantity" class="form-control" value="10">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Mô tả chi tiết tài nguyên sản phẩm..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-info text-white fw-semibold px-4"><i class="bi bi-check-circle me-1"></i>Lưu Tài Nguyên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="mt-5 py-4 bg-white border-top">
     <div class="container text-center text-muted">
-        <p>&copy; 2024 CRM AI Wagtail System - Checklist 4 Completed</p>
+        <p class="mb-0">&copy; 2026 Smart CRM AI Wagtail System. Powered by Wagtail CMS & Google Gemini AI API.</p>
     </div>
 </footer>
 
